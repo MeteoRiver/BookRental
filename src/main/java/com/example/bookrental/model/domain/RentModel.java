@@ -4,6 +4,9 @@ import com.example.bookrental.model.entity.Books;
 import com.example.bookrental.model.entity.Rents;
 import com.example.bookrental.model.entity.Users;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Builder
 @Getter
@@ -21,14 +24,19 @@ public class RentModel {
     //@Schema(title="책")
     private Long bookId;
 
-    //@Schema(title="대여여부")
-    private boolean rental;  // true: 대여중, false: 재고 있음
+    //@Schema(title="대출일")
+    private LocalDateTime RentDate;
+    
+    //@Schema(title=:"반납일")
+    private LocalDateTime ReturnDate;
 
     public static RentModel fromEntity(Rents rents) {
         return RentModel.builder()
                 .rentId(rents.getRentId())
                 .userId(rents.getUser().getUserId())
                 .bookId(rents.getBook().getBookId())
+                .RentDate(rents.getRentDate())
+                .ReturnDate(rents.getReturnDate())
                 .build();
     }
 }

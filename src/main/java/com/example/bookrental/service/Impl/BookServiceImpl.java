@@ -27,6 +27,8 @@ public class BookServiceImpl implements BookService {
     public Object insert(BookModel bookModel){
         Books savedBook = bookRepository.save(Books.builder()
                         .bookName(bookModel.getBookName())
+                        .author(bookModel.getAuthor())
+                        .PubDate(bookModel.getPubDate())
                         .build());
 
         return BookModel.fromEntity(savedBook);
@@ -40,8 +42,17 @@ public class BookServiceImpl implements BookService {
     // 도서 조회 (단일 조회)
     public Object findById(Long bookId) {
         return bookRepository.findById(bookId)
-                .map(BookModel::fromEntity)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "책이 존재하지 않습니다."));
+    }
+
+    // 도서 제목 검색 (부분 검색 지원)
+    public Page<BookModel> findByName(String title, Pageable pageable) {
+        return bookRepository.findByName(title, pageable);
+    }
+
+    // 저자 이름 검색 (부분 검색 지원)
+    public Page<BookModel> findByAuthor(String author, Pageable pageable) {
+        return bookRepository.findByAuthor(author, pageable);
     }
 
 

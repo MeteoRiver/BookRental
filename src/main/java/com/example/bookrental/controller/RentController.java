@@ -1,9 +1,11 @@
 package com.example.bookrental.controller;
 
 import com.example.bookrental.model.domain.RentModel;
+import com.example.bookrental.service.Impl.BookServiceImpl;
 import com.example.bookrental.service.Impl.RentServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.swagger2.mappers.ModelMapper;
 
 @RestController
 @RequestMapping("/api/rent")

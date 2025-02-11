@@ -2,6 +2,9 @@ package com.example.bookrental.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Builder
 @Entity
@@ -24,7 +27,10 @@ public class Rents {
     @JoinColumn(name = "bookId", nullable = false)
     private Books book;
 
-    @Column(nullable = false)
-    private boolean rental;  // true: 대여중, false: 재고 있음
+    @CreatedDate
+    private LocalDateTime RentDate;
+
+    @CreatedDate
+    private LocalDateTime ReturnDate;
 }
 

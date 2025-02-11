@@ -3,8 +3,12 @@ package com.example.bookrental.service;
 import com.example.bookrental.model.domain.RentModel;
 
 public interface RentService {
+
+    //대출 등록
+    Object insert(Long id);
+
     //도서 대출
-    Object rent(RentModel rent);
+    boolean rent(Long id, Long userId);
 
     //도서 반납
     boolean remove(Long id);
