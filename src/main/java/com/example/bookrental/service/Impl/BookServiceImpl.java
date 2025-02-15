@@ -1,12 +1,13 @@
 package com.example.bookrental.service.Impl;
 
 import com.example.bookrental.model.domain.BookModel;
-import com.example.bookrental.model.domain.TagModel;
 import com.example.bookrental.model.entity.Books;
 import com.example.bookrental.model.entity.Tags;
 import com.example.bookrental.model.repository.BookRepository;
 import com.example.bookrental.model.repository.TagRepository;
 import com.example.bookrental.service.BookService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 @Service
 @Transactional
 public class BookServiceImpl implements BookService {
@@ -32,8 +34,9 @@ public class BookServiceImpl implements BookService {
         this.tagRepository = tagRepository;
     }
 
-    // 📌 도서 등록 (태그 포함)
+    // 도서 등록 (태그 포함)
     @Override
+    @CacheEvict(value = "books", allEntries = true)
     public BookModel insert(BookModel bookModel) {
         Set<Tags> tagSet = new HashSet<>();
         if (bookModel.getTagName() != null && !bookModel.getTagName().isEmpty()) {
@@ -52,29 +55,34 @@ public class BookServiceImpl implements BookService {
         return BookModel.fromEntity(savedBook);
     }
 
-    // 📌 전체 도서 조회 (태그 필터링 추가)
+    // 전체 도서 조회 (태그 필터링 추가)
+    @Cacheable(value = "books", key = "#title + (#pageable != null ? #pageable.toString() : 'empty') + (#tags != null ? #tags.toString() : 'empty')")
     public Page<BookModel> findAll(Pageable pageable, List<String> tags) {
         return bookRepository.findAllBook(pageable, tags);
     }
 
-    // 📌 도서 단일 조회 (BookModel로 반환)
+    // 도서 단일 조회 (BookModel로 반환)
+    @Cacheable(value = "books", key = "#bookId")
     public BookModel findById(Long bookId) {
         Books book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "책이 존재하지 않습니다."));
         return BookModel.fromEntity(book);
     }
 
-    // 📌 제목 검색 (태그 필터링 추가)
+    // 제목 검색 (태그 필터링 추가)
+    @Cacheable(value = "books", key = "#title + (#pageable != null ? #pageable.toString() : 'empty') + (#tags != null ? #tags.toString() : 'empty')")
     public Page<BookModel> findByName(String title, Pageable pageable, List<String> tags) {
         return bookRepository.findByName(title, pageable, tags);
     }
 
-    // 📌 저자 검색 (태그 필터링 추가)
+    // 저자 검색 (태그 필터링 추가)
+    @Cacheable(value = "books", key = "#author + (#pageable != null ? #pageable.toString() : 'empty') + (#tags != null ? #tags.toString() : 'empty')")
     public Page<BookModel> findByAuthor(String author, Pageable pageable, List<String> tags) {
         return bookRepository.findByAuthor(author, pageable, tags);
     }
 
-    // 📌 도서 수정 (태그 포함)
+    // 도서 수정 (태그 포함)
+    @CacheEvict(value = "books", allEntries = true)
     public BookModel update(Long id, BookModel bookModel) {
         Books updatedBook = bookRepository.findById(id)
                 .map(existingBook -> {
@@ -97,7 +105,8 @@ public class BookServiceImpl implements BookService {
         return BookModel.fromEntity(updatedBook);
     }
 
-    // 📌 도서 삭제
+    // 도서 삭제
+    @CacheEvict(value = "books", allEntries = true)
     public boolean remove(Long id) {
         try {
             if (bookRepository.existsById(id)) {

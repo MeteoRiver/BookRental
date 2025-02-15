@@ -3,14 +3,18 @@ package com.example.bookrental.controller;
 import com.example.bookrental.model.domain.BookModel;
 import com.example.bookrental.service.BookService;
 import com.example.bookrental.service.Impl.RentServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
+
+@Slf4j
 @RestController
 @RequestMapping("/api/book")
 public class BookController {
@@ -48,10 +52,16 @@ public class BookController {
             @RequestParam(defaultValue = "bookName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction,
             @RequestParam(required = false) List<String> tags) {
-        System.out.println(" 책 조회 요청 들어옴! page=" + page + ", size=" + size);
+        Instant startTime = Instant.now();  // 요청 시작 시간
+        log.info("책 조회 요청 들어옴! page={}, size={}", page, size);
 
         Sort sort = Sort.by(direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        return ResponseEntity.ok(bookService.findAll(PageRequest.of(page, size, sort), tags));
+        ResponseEntity<?> responseEntity = ResponseEntity.ok(bookService.findAll(PageRequest.of(page, size, sort), tags));
+
+        Instant endTime = Instant.now();  // 요청 종료 시간
+        log.info("책 조회 요청 처리 시간: {}ms", endTime.toEpochMilli() - startTime.toEpochMilli());
+
+        return responseEntity;
     }
 
     // 책 아이디로 조회

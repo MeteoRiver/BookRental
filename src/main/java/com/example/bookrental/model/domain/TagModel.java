@@ -11,13 +11,10 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Schema(title="태그")
 public class TagModel {
 
-    //@Schema(title="태그 고유 ID")
     private Long tagId;
 
-    //@Schema(title="태그명")
     private String name;
 
     public static TagModel fromEntity(Tags tag) {

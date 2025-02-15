@@ -8,7 +8,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Schema(title="사용자")
 public class UserModel {
     private Long id;
 
