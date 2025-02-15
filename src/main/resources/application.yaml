@@ -1,11 +1,12 @@
+server:
+    port: 8080
+
 spring:
     application:
         name: BookRental
-    datasource:
-        url: jdbc:mysql://localhost:3306/bookRental
-        username: root
-        password: qwer1234
-        driver-class-name: com.mysql.cj.jdbc.Driver
+    profiles:
+        active: dev  # 기본 활성화 프로필
+
     jpa:
         hibernate:
             ddl-auto: update
@@ -13,17 +14,30 @@ spring:
         properties:
             hibernate:
                 format_sql: true
-    server:
-        port: 8080
 
     jwt:
         secret: aa59df3bbeabb76fa3d7a1cc54619384bc1aacee9274774914f11fb9b90f387c
 
-    # Swagger
-    springdoc:
-        api-docs:
-            enabled: true
-        swagger-ui:
-            path: /swagger-ui.html
-            operationsSorter: alpha
+---
+# 개발 환경(dev)
+spring:
+    config:
+        activate:
+            on-profile: dev
+    datasource:
+        url: jdbc:mysql://dev-db:3306/devdb
+        username: devuser
+        password: devpass
+        driver-class-name: com.mysql.cj.jdbc.Driver
 
+---
+# 운영 환경(prod)
+spring:
+    config:
+        activate:
+            on-profile: prod
+    datasource:
+        url: jdbc:mysql://prod-db:3306/proddb
+        username: produser
+        password: prodpass
+        driver-class-name: com.mysql.cj.jdbc.Driver

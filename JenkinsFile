@@ -2,52 +2,82 @@ pipeline {
     agent any
 
     environment {
+        IMAGE_NAME = "bookRental"
+        CONTAINER_NAME = "bookRental"
+        ROLLBACK_CONTAINER_NAME = "bookRental-old"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo "📥 코드 가져오기"
-                git branch: 'main', url: 'https://github.com/my-repo/book-rental-app.git'
+                git branch: 'main', url: 'git@github.com:MeteoRiver/BookRental.git'
             }
         }
 
-        stage('Build') {
+         stage('Build & Test') {
             steps {
-                echo "⚙️ 빌드 시작"
-                sh './gradlew clean build -x test'
+                sh 'chmod +x ./gradlew'
+                sh './gradlew clean build'
             }
         }
 
         stage('Test') {
             steps {
-                echo "🧪 테스트 실행"
                 sh './gradlew test'
             }
             post {
                 failure {
-                    echo "🚨 테스트 실패 - 배포 중단!"
                     error("테스트 실패")
                 }
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Build Docker Image') {
             steps {
-                echo "🐳 Docker 이미지 빌드 및 푸시"
-                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:latest ."
-                sh "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
+                script {
+                    def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    sh "docker build -t ${imageTag} ."
+                }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Docker') {
             steps {
-                echo "🚀 애플리케이션 배포"
-                sh '''
-                docker-compose down
-                docker-compose pull
-                docker-compose up -d --build
-                '''
+                def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+
+                // 기존 컨테이너를 롤백용으로 변경
+                sh """
+                    if docker ps -a --format '{{.Names}}' | grep -q '${CONTAINER_NAME}'; then
+                        echo "Stopping existing container..."
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rename ${CONTAINER_NAME} ${ROLLBACK_CONTAINER_NAME} || true
+                    fi
+                """
+
+                //새 컨테이너 실행
+                sh """
+                        echo "Deploying new version: ${imageTag}"
+                        docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${imageTag}
+                    """
+
+                //30초 대기 후 확인
+                sleep 30
+                def status = sh(script: "docker ps -f name=${CONTAINER_NAME} --format '{{.Status}}'", returnStdout: true).trim()
+                //실패시 삭제 후 기존거 실행
+                if (!status.contains("Up")) {
+                    echo "Deployment failed, rolling back..."
+                    sh """
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rename ${ROLLBACK_CONTAINER_NAME} ${CONTAINER_NAME} || true
+                        docker start ${CONTAINER_NAME} || true
+                    """
+                    error("Deployment failed, rolled back to previous version.")
+                } else {//성공 시 실행
+                    echo "Deployment successful. Removing old container..."
+                    sh "docker rm ${ROLLBACK_CONTAINER_NAME} || true"
+                }
+
             }
         }
 
