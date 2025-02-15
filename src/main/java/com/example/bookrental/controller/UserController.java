@@ -3,9 +3,12 @@ package com.example.bookrental.controller;
 import com.example.bookrental.model.domain.UserModel;
 import com.example.bookrental.service.Impl.UserServiceImpl;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -23,10 +26,10 @@ public class UserController {
         return ResponseEntity.ok(userService.insert(userModel));
     }
 
-    // 2. 사용자 전체 조회 (페이징)
+    // 2. 사용자 전체 조회
     @GetMapping
-    public ResponseEntity<Page<UserModel>> getAllUsers(Pageable pageable) {
-        return ResponseEntity.ok(userService.findAll(pageable));
+    public ResponseEntity<List<UserModel>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll());
     }
 
     // 3. 특정 사용자 조회

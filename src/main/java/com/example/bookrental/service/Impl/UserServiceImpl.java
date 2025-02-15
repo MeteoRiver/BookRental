@@ -1,25 +1,28 @@
 package com.example.bookrental.service.Impl;
 
-import com.example.bookrental.model.domain.BookModel;
 import com.example.bookrental.model.domain.UserModel;
 import com.example.bookrental.model.entity.Users;
 import com.example.bookrental.model.repository.UserRepository;
 import com.example.bookrental.service.UserService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository , BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
+        this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
     }
 
     // 사용자 등록
@@ -29,10 +32,10 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(userModel.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 등록된 이메일입니다.");
         }
-
+    String encodedPassword = bCryptPasswordEncoder.encode(userModel.getPassword());
         Users savedUser = userRepository.save(Users.builder()
                 .userName(userModel.getUserName())
-                .password(userModel.getPassword())  // 실제 서비스에서는 비밀번호 암호화 필요
+                .password(encodedPassword)
                 .email(userModel.getEmail())
                 .phone(userModel.getPhone())
                 .build());
@@ -41,8 +44,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserModel> findAll(Pageable pageable) {
-        return userRepository.findAll(pageable).map(UserModel::fromEntity);
+    public List<UserModel> findAll() {
+        return userRepository.findAll().stream()
+                .map(UserModel::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override

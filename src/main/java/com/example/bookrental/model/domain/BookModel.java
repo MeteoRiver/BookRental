@@ -3,35 +3,38 @@ package com.example.bookrental.model.domain;
 import com.example.bookrental.model.entity.Books;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Builder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Schema(title="책")
 public class BookModel {
 
-    //@Schema(title="책 고유Id")
     private Long bookId;
-
-    //@Schema(title="책 이름")
     private String bookName;
-
-    //@Schema(title="저자")
     private String author;
+    private LocalDate pubDate;
+    private Set<String> tagName;
 
-    //@Schema(title="출판일")
-    private LocalDateTime PubDate;
+    // QueryDSL에서 사용할 생성자 추가
+    public BookModel(Long bookId, String bookName, String author, LocalDate pubDate) {
+        this.bookId = bookId;
+        this.bookName = bookName;
+        this.author = author;
+        this.pubDate = pubDate;
+    }
 
     public static BookModel fromEntity(Books books) {
         return BookModel.builder()
                 .bookId(books.getBookId())
                 .bookName(books.getBookName())
                 .author(books.getAuthor())
-                .PubDate(books.getPubDate())
+                .pubDate(books.getPubDate())
+                .tagName(books.getTags().stream().map(tag -> tag.getName()).collect(Collectors.toSet())) // 태그 변환 추가
                 .build();
     }
-
 }

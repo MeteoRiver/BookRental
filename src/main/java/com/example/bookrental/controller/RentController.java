@@ -1,11 +1,8 @@
 package com.example.bookrental.controller;
 
-import com.example.bookrental.model.domain.RentModel;
-import com.example.bookrental.service.Impl.BookServiceImpl;
 import com.example.bookrental.service.Impl.RentServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.swagger2.mappers.ModelMapper;
 
 @RestController
 @RequestMapping("/api/rent")
@@ -18,22 +15,31 @@ public class RentController {
     }
 
     // 1. 도서 대출 등록
-    @PostMapping
-    public ResponseEntity<?> rentBook(@RequestBody RentModel rentModel) {
-        return ResponseEntity.ok(rentService.rent(rentModel));
+    @PostMapping("/{bookId}/{userId}")
+    public ResponseEntity<?> insert(@PathVariable Long bookId, @PathVariable Long userId) {
+        return ResponseEntity.ok(rentService.insert(bookId,userId));
     }
 
     // 2. 대출 상태 확인
     @GetMapping("/{id}")
     public ResponseEntity<?> checkRentStatus(@PathVariable Long id) {
-        return ResponseEntity.ok(rentService.rentState(id));
+        boolean rentState = rentService.rentState(id);
+        String status = rentState ? "rent" : "return";
+        return ResponseEntity.ok(status);
+    }
+    // 3. 도서 대출
+    @PutMapping("/{bookId}/{userId}")
+    public ResponseEntity<?> rentBook(@PathVariable Long bookId, @PathVariable Long userId) {
+        return rentService.rent(bookId, userId)
+                ? ResponseEntity.ok("rent")
+                : ResponseEntity.badRequest().body("failed");
     }
 
-    // 3. 도서 반납
-    @DeleteMapping("/{id}")
+    // 4. 도서 반납
+    @PutMapping("/return/{id}")
     public ResponseEntity<?> returnBook(@PathVariable Long id) {
         return rentService.remove(id)
-                ? ResponseEntity.ok("반납 완료")
-                : ResponseEntity.badRequest().body("반납 실패");
+                ? ResponseEntity.ok("return")
+                : ResponseEntity.badRequest().body("failed");
     }
 }

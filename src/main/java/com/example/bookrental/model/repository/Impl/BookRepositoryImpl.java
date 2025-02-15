@@ -2,7 +2,9 @@ package com.example.bookrental.model.repository.Impl;
 
 import com.example.bookrental.model.domain.BookModel;
 import com.example.bookrental.model.entity.QBooks;
+import com.example.bookrental.model.entity.QTags;
 import com.example.bookrental.model.repository.custom.BookRepositoryCustom;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,95 +21,119 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
     QBooks books = QBooks.books;
-
+    QTags tags = QTags.tags;
 
     @Override
-    public Page<BookModel> findAllBook(Pageable pageable) {
-        var total = jpaQueryFactory
-                .select(books.bookId)
+    public Page<BookModel> findAllBook(Pageable pageable, List<String> tagNames) {
+        var totalQuery = jpaQueryFactory
+                .select(books.count())
                 .from(books)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                .leftJoin(books.tags, tags)
+                .where(filterByTags(tagNames));
 
-        List<BookModel> bookModels = total.isEmpty() ? List.of() :
+        long total = totalQuery.fetchCount();
+
+        List<BookModel> bookModels = total == 0 ? List.of() :
                 jpaQueryFactory
                         .select(Projections.constructor(
                                 BookModel.class,
                                 books.bookId,
                                 books.bookName,
                                 books.author,
-                                books.PubDate
+                                books.pubDate
                         ))
                         .from(books)
+                        .leftJoin(books.tags, tags)
+                        .where(filterByTags(tagNames))
+                        .distinct()
                         .orderBy(getSort(pageable))
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
                         .fetch();
-        return new PageImpl<>(bookModels, pageable, total.size());
+
+        return new PageImpl<>(bookModels, pageable, total);
     }
 
-    // 도서 제목으로 검색 (페이징)
     @Override
-    public Page<BookModel> findByName(String title, Pageable pageable) {
-        var total = jpaQueryFactory
+    public Page<BookModel> findByName(String bookName, Pageable pageable, List<String> tagNames) {
+        var totalQuery = jpaQueryFactory
                 .select(books.count())
                 .from(books)
-                .where(books.bookName.containsIgnoreCase(title))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                .leftJoin(books.tags, tags)
+                .where(books.bookName.containsIgnoreCase(bookName).and(filterByTags(tagNames)));
+
+        long total = totalQuery.fetchCount();
 
         List<BookModel> bookModels = jpaQueryFactory
                 .select(Projections.constructor(
                         BookModel.class,
                         books.bookId,
-                        books.bookName
+                        books.bookName,
+                        books.author,
+                        books.pubDate
                 ))
                 .from(books)
-                .where(books.bookName.containsIgnoreCase(title)) // 부분 검색 (대소문자 구분 없음)
+                .leftJoin(books.tags, tags)
+                .where(books.bookName.containsIgnoreCase(bookName).and(filterByTags(tagNames)))
+                .distinct()
                 .orderBy(getSort(pageable))
-                .fetch();
-
-        return new PageImpl<>(bookModels, pageable, total.size());
-    }
-
-    // 저자 이름으로 검색 (페이징)
-    @Override
-    public Page<BookModel> findByAuthor(String author, Pageable pageable) {
-        var total = jpaQueryFactory
-                .select(books.count())
-                .from(books)
-                .where(books.author.containsIgnoreCase(author))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
+        return new PageImpl<>(bookModels, pageable, total);
+    }
+
+    @Override
+    public Page<BookModel> findByAuthor(String author, Pageable pageable, List<String> tagNames) {
+        var totalQuery = jpaQueryFactory
+                .select(books.count())
+                .from(books)
+                .leftJoin(books.tags, tags)
+                .where(books.author.containsIgnoreCase(author).and(filterByTags(tagNames)));
+
+        long total = totalQuery.fetchCount();
 
         List<BookModel> bookModels = jpaQueryFactory
                 .select(Projections.constructor(
                         BookModel.class,
                         books.bookId,
-                        books.bookName
+                        books.bookName,
+                        books.author,
+                        books.pubDate
                 ))
                 .from(books)
-                .where(books.author.containsIgnoreCase(author)) // 저자명 부분 검색 (대소문자 무시)
+                .leftJoin(books.tags, tags)
+                .where(books.author.containsIgnoreCase(author).and(filterByTags(tagNames)))
+                .distinct()
                 .orderBy(getSort(pageable))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
 
-        return new PageImpl<>(bookModels, pageable, total.size());
+        return new PageImpl<>(bookModels, pageable, total);
     }
 
-    // 정렬 조건 동적 적용
+    private BooleanExpression filterByTags(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return null;
+        }
+        return tags.name.in(tagNames);
+    }
+
     private OrderSpecifier<?> getSort(Pageable pageable) {
         if (pageable.getSort().isUnsorted()) {
-            return books.bookName.asc(); // 기본 정렬 (도서명 오름차순)
+            return books.bookName.asc();
         }
 
         for (Sort.Order order : pageable.getSort()) {
-            if (order.getProperty().equals("title")) {
-                return order.isAscending() ? books.bookName.asc() : books.bookName.desc();
-            } else if (order.getProperty().equals("publishDate")) {
-                return order.isAscending() ? books.PubDate.asc() : books.PubDate.desc();
+            switch (order.getProperty()) {
+                case "bookName":
+                    return order.isAscending() ? books.bookName.asc() : books.bookName.desc();
+                case "pubDate":
+                    return order.isAscending() ? books.pubDate.asc() : books.pubDate.desc();
             }
         }
-        return books.bookName.asc(); // 기본 정렬
+        return books.bookName.asc();
     }
 }

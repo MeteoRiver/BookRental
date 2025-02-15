@@ -27,10 +27,20 @@ public class Rents {
     @JoinColumn(name = "bookId", nullable = false)
     private Books book;
 
-    @CreatedDate
+    @Column(name = "RentDate", nullable = false)
     private LocalDateTime RentDate;
 
-    @CreatedDate
+    @Column(name = "returnDate", nullable = false)
     private LocalDateTime ReturnDate;
+
+    @PrePersist
+    public void prePersist() {
+        if (RentDate == null) {
+            RentDate = LocalDateTime.now();
+        }
+        if (ReturnDate == null) {
+            ReturnDate = LocalDateTime.now();
+        }
+    }
 }
 

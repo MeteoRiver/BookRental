@@ -1,3 +1,29 @@
 spring:
     application:
         name: BookRental
+    datasource:
+        url: jdbc:mysql://localhost:3306/bookRental
+        username: root
+        password: qwer1234
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+    server:
+        port: 8080
+
+    jwt:
+        secret: aa59df3bbeabb76fa3d7a1cc54619384bc1aacee9274774914f11fb9b90f387c
+
+    # Swagger
+    springdoc:
+        api-docs:
+            enabled: true
+        swagger-ui:
+            path: /swagger-ui.html
+            operationsSorter: alpha
+
