@@ -29,7 +29,7 @@ spring:
     datasource:
         url: jdbc:mysql://localhost:3306/bookRental
         username: root
-        password: qwer1234
+        password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
 
 ---
@@ -40,6 +40,6 @@ spring:
             on-profile: prod
     datasource:
         url: jdbc:mysql://prod-db:3306/proddb
-        username: produser
-        password: prodpass
+        username: root
+        password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
