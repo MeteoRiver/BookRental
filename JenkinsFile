@@ -36,48 +36,50 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
-                    sh "docker build -t ${imageTag} ."
+                    env.IMAGE_TAG = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    sh "docker build -t ${env.IMAGE_TAG} ."
                 }
             }
         }
 
         stage('Deploy Docker') {
             steps {
-                def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                script {
+                    env.IMAGE_TAG = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
 
-                // 기존 컨테이너를 롤백용으로 변경
-                sh """
-                    if docker ps -a --format '{{.Names}}' | grep -q '${CONTAINER_NAME}'; then
-                        echo "Stopping existing container..."
-                        docker stop ${CONTAINER_NAME} || true
-                        docker rename ${CONTAINER_NAME} ${ROLLBACK_CONTAINER_NAME} || true
-                    fi
-                """
-
-                //새 컨테이너 실행
-                sh """
-                        echo "Deploying new version: ${imageTag}"
-                        docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${imageTag}
-                    """
-
-                //30초 대기 후 확인
-                sleep 30
-                def status = sh(script: "docker ps -f name=${CONTAINER_NAME} --format '{{.Status}}'", returnStdout: true).trim()
-                //실패시 삭제 후 기존거 실행
-                if (!status.contains("Up")) {
-                    echo "Deployment failed, rolling back..."
+                    // 기존 컨테이너 롤백 처리
                     sh """
-                        docker stop ${CONTAINER_NAME} || true
-                        docker rename ${ROLLBACK_CONTAINER_NAME} ${CONTAINER_NAME} || true
-                        docker start ${CONTAINER_NAME} || true
+                        if docker ps -a --format '{{.Names}}' | grep -q '${CONTAINER_NAME}'; then
+                            echo "Stopping existing container..."
+                            docker stop ${CONTAINER_NAME} || true
+                            docker rename ${CONTAINER_NAME} ${ROLLBACK_CONTAINER_NAME} || true
+                        fi
                     """
-                    error("Deployment failed, rolled back to previous version.")
-                } else {//성공 시 실행
-                    echo "Deployment successful. Removing old container..."
-                    sh "docker rm ${ROLLBACK_CONTAINER_NAME} || true"
-                }
 
+                    // 새 컨테이너 실행
+                    sh """
+                        echo "Deploying new version: ${env.IMAGE_TAG}"
+                        docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${env.IMAGE_TAG}
+                    """
+
+                    // 30초 대기 후 확인
+                    sleep 30
+                    env.STATUS = sh(script: "docker ps -f name=${CONTAINER_NAME} --format '{{.Status}}'", returnStdout: true).trim()
+
+                    // 실패 시 롤백
+                    if (!env.STATUS.contains("Up")) {
+                        echo "Deployment failed, rolling back..."
+                        sh """
+                            docker stop ${CONTAINER_NAME} || true
+                            docker rename ${ROLLBACK_CONTAINER_NAME} ${CONTAINER_NAME} || true
+                            docker start ${CONTAINER_NAME} || true
+                        """
+                        error("Deployment failed, rolled back to previous version.")
+                    } else {
+                        echo "Deployment successful. Removing old container..."
+                        sh "docker rm ${ROLLBACK_CONTAINER_NAME} || true"
+                    }
+                }
             }
         }
 
@@ -96,10 +98,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ 배포 완료!"
+            echo "배포 완료!"
         }
         failure {
-            echo "🚨 CI/CD 실패"
+            echo "CI/CD 실패"
         }
     }
 }
