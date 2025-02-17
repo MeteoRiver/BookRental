@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-         stage('Build & Test') {
+        stage('Build & Test') {
             steps {
                 sh 'chmod +x ./gradlew'
                 sh './gradlew clean build'
@@ -61,7 +61,7 @@ pipeline {
                         echo "Deploying new version: ${env.IMAGE_TAG}"
                         docker run -d --name ${CONTAINER_NAME} -p 8080:8080 \
                         -e SPRING_PROFILES_ACTIVE=prod \
-                        -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/bookRental \
+                        -e SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/bookRental \
                         -e SPRING_DATASOURCE_USERNAME=root \
                         -e SPRING_DATASOURCE_PASSWORD=1234 \
                         ${env.IMAGE_TAG}
@@ -69,7 +69,7 @@ pipeline {
 
                     // 30초 대기 후 확인
                     sleep 30
-                    env.STATUS = sh(script: "docker ps -f name=${CONTAINER_NAME} --format '{{.Status}}'", returnStdout: true).trim()
+                    env.STATUS = sh(script: "docker ps -a -f name=${CONTAINER_NAME} --format '{{.Status}}'", returnStdout: true).trim()
 
                     // 실패 시 롤백
                     if (!env.STATUS.contains("Up")) {

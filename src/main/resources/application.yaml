@@ -20,6 +20,12 @@ spring:
     jwt:
         secret: aa59df3bbeabb76fa3d7a1cc54619384bc1aacee9274774914f11fb9b90f387c
 
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info  # Actuator health 체크 활성화
+
 ---
 # 개발 환경(dev)
 spring:
@@ -27,7 +33,7 @@ spring:
         activate:
             on-profile: dev
     datasource:
-        url: jdbc:mysql://localhost:3306/bookRental
+        url: jdbc:mysql://192.168.45.212:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
@@ -39,7 +45,7 @@ spring:
         activate:
             on-profile: prod
     datasource:
-        url: jdbc:mysql://localhost:3306/bookRental
+        url: jdbc:mysql://db:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver

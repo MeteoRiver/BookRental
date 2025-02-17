@@ -9,12 +9,27 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/bookRental
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/bookRental  # db 서비스로 변경
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=1234
     depends_on:
-      []
+      - db
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "db", "-u", "root", "-pqwer1234" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "db", "-u", "root", "-p1234" ]  # DB 컨테이너에 대한 헬스체크
       interval: 10s
       retries: 5
+
+  db:
+    container_name: mysql-db
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: qwer1234
+      MYSQL_DATABASE: bookRental
+    ports:
+      - "3306:3306"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
