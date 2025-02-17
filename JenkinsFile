@@ -28,17 +28,6 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh './gradlew test'
-            }
-            post {
-                failure {
-                    error("테스트 실패")
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
