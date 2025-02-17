@@ -33,7 +33,7 @@ spring:
         activate:
             on-profile: dev
     datasource:
-        url: jdbc:mysql://192.168.45.212:3306/bookRental
+        url: jdbc:mysql://mysql-db:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
@@ -45,7 +45,7 @@ spring:
         activate:
             on-profile: prod
     datasource:
-        url: jdbc:mysql://db:3306/bookRental
+        url: jdbc:mysql://mysql-db:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
