@@ -53,7 +53,8 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 }
 jar {
-	archivesBaseName = 'bookrental'
+	archiveBaseName = 'BookRental'
+	archiveVersion = '1.0.0'
 }
 tasks.named('test') {
 	useJUnitPlatform()
