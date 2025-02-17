@@ -14,7 +14,6 @@ spring:
         properties:
             hibernate:
                 format_sql: true
-                dialect: org.hibernate.dialect.MySQL8Dialect
     cache:
         type: simple
     jwt:
@@ -27,7 +26,7 @@ spring:
         activate:
             on-profile: dev
     datasource:
-        url: jdbc:mysql://172.20.0.3:3306/bookRental
+        url: jdbc:mysql://localhost:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
@@ -39,7 +38,7 @@ spring:
         activate:
             on-profile: prod
     datasource:
-        url: jdbc:mysql://172.20.0.3:3306/bookRental
+        url: jdbc:mysql://localhost:3306/bookRental
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver

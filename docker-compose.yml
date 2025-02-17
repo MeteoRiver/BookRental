@@ -9,33 +9,12 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/book_rental
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/bookRental
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=qwer1234
+      - SPRING_DATASOURCE_PASSWORD=1234
     depends_on:
-      - db
+      []
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "db", "-u", "root", "-pqwer1234" ]
       interval: 10s
       retries: 5
-
-  db:
-    image: mysql:8.0
-    container_name: book-rental-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: qwer1234
-      MYSQL_DATABASE: book_rental
-    ports:
-      - "3306:3306"
-    volumes:
-      - db-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 5
-      start_period: 10s
-      timeout: 5s
-
-volumes:
-  db-data:

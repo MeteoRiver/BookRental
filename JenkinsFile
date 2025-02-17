@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "📥 코드 가져오기"
+                echo "코드"
                 git branch: 'main', url: 'git@github.com:MeteoRiver/BookRental.git'
             }
         }
@@ -56,10 +56,15 @@ pipeline {
                         fi
                     """
 
-                    // 새 컨테이너 실행
+                    // 새 컨테이너 실행 (로컬 MySQL 사용)
                     sh """
                         echo "Deploying new version: ${env.IMAGE_TAG}"
-                        docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${env.IMAGE_TAG}
+                        docker run -d --name ${CONTAINER_NAME} -p 8080:8080 \
+                        -e SPRING_PROFILES_ACTIVE=prod \
+                        -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/bookRental \
+                        -e SPRING_DATASOURCE_USERNAME=root \
+                        -e SPRING_DATASOURCE_PASSWORD=1234 \
+                        ${env.IMAGE_TAG}
                     """
 
                     // 30초 대기 후 확인
